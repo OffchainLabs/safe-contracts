@@ -47,7 +47,30 @@ const soliditySettings = !!SOLIDITY_SETTINGS ? JSON.parse(SOLIDITY_SETTINGS) : u
 
 const deterministicDeployment = CUSTOM_DETERMINISTIC_DEPLOYMENT == "true" ?
   (network: string) => {
-    const info = getSingletonFactoryInfo(parseInt(network))
+    const info = (()=>{
+      // DG Note: generated via https://github.com/safe-global/safe-singleton-factory
+      // (see https://github.com/OffchainLabs/safe-contracts#replay-protection-eip-155)
+      if (network === '1337'){
+        return {
+          "gasPrice": 100000000000,
+          "gasLimit": 100000,
+          "signerAddress": "0x3f1Eae7D46d88F08fc2F8ed27FCb2AB183EB2d0E",
+          "transaction": "0xf8a78085174876e800830186a08080b853604580600e600039806000f350fe7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe03601600081602082378035828234f58015156039578182fd5b8082525050506014600cf3820a95a0aba1cce495eceace76f7eeb7fcaaa5cdeefe4536166cb7a45890e753db95f2f0a059e0498f3083a6d15a1de157fdbd301c826dba8d735382d1c83b44c683fb5738",
+          "address": "0xda52b25ddB0e3B9CC393b0690Ac62245Ac772527"
+        }
+      }
+      if (network === '412346'){
+        return {
+          "gasPrice": 100000000000,
+          "gasLimit": 100000,
+          "signerAddress": "0x3f1Eae7D46d88F08fc2F8ed27FCb2AB183EB2d0E",
+          "transaction": "0xf8a88085174876e800830186a08080b853604580600e600039806000f350fe7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe03601600081602082378035828234f58015156039578182fd5b8082525050506014600cf3830c9598a054499f0beecc738ed04f6d0997f610986d4303aca01b9b6cd9cb549430f622d4a00ab4b93155c922fbd2c6e853b2083f21de13a07ec0f3c121b8b86848d5c5ceb4",
+          "address": "0xda52b25ddB0e3B9CC393b0690Ac62245Ac772527"
+        }
+      }
+      return getSingletonFactoryInfo(parseInt(network))
+    })()
+    
     if (!info) return undefined
     return {
       factory: info.address,
@@ -56,6 +79,7 @@ const deterministicDeployment = CUSTOM_DETERMINISTIC_DEPLOYMENT == "true" ?
       signedTx: info.transaction
     }
   } : undefined
+console.warn('deterministicDeployment', deterministicDeployment);
 
 const userConfig: HardhatUserConfig = {
   paths: {
@@ -133,6 +157,14 @@ const userConfig: HardhatUserConfig = {
       ...sharedNetworkConfig,
       url: `https://api.avax.network/ext/bc/C/rpc`,
     },
+    localGeth: {
+      ...sharedNetworkConfig,
+      url: `http://localhost:8545`,
+    },
+    localArb: {
+      ...sharedNetworkConfig,
+      url: `http://localhost:8547`,
+    },
   },
   deterministicDeployment,
   namedAccounts: {
@@ -141,9 +173,9 @@ const userConfig: HardhatUserConfig = {
   mocha: {
     timeout: 2000000,
   },
-  etherscan: {
-    apiKey: ETHERSCAN_API_KEY,
-  },
+  // etherscan: {
+  //   apiKey: ETHERSCAN_API_KEY,
+  // },
 };
 if (NODE_URL) {
   userConfig.networks!!.custom = {
